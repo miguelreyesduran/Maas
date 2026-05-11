@@ -1,0 +1,66 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  
+  --color-brand-primary: var(--color-indigo-600);
+  --color-brand-secondary: var(--color-indigo-900);
+  --color-bg-main: var(--color-slate-50);
+  --color-border-subtle: var(--color-slate-200);
+}
+
+@layer base {
+  body {
+    @apply font-sans bg-slate-50 text-slate-900;
+  }
+}
+
+@layer components {
+  .card-dense {
+    @apply bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden;
+  }
+  
+  .badge-status {
+    @apply text-[10px] uppercase font-bold px-2 py-0.5 rounded tracking-wider;
+  }
+}
+
+@layer utilities {
+  @media print {
+    .no-print {
+      display: none !important;
+    }
+    body {
+      background: white !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+    .max-w-6xl, .max-w-7xl, .max-w-4xl {
+      max-width: 100% !important;
+      width: 100% !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+    .shadow-xl, .shadow-2xl, .shadow-lg, .shadow-md, .shadow-sm {
+      box-shadow: none !important;
+      border: 1px solid #e2e8f0 !important;
+    }
+    .bg-indigo-900, .bg-indigo-600, .bg-slate-900, .bg-slate-800 {
+      background-color: #f8fafc !important;
+      color: black !important;
+      border: 1px solid #cbd5e1 !important;
+      -webkit-print-color-adjust: exact;
+    }
+    .text-white, .text-indigo-50, .text-emerald-400 {
+      color: black !important;
+    }
+    canvas {
+      max-width: 100% !important;
+      height: auto !important;
+    }
+    .rounded-[2rem], .rounded-3xl, .rounded-2xl {
+      border-radius: 8px !important;
+    }
+  }
+}

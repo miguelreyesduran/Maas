@@ -1,0 +1,59 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "User profile information and role",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "colaborador"] },
+        "area": { "type": "string" },
+        "position": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "name", "email", "role"]
+    },
+    "Evaluation": {
+      "title": "Performance Evaluation",
+      "description": "Performance evaluation record",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "collaboratorId": { "type": "string" },
+        "evaluatorId": { "type": "string" },
+        "collaboratorName": { "type": "string" },
+        "area": { "type": "string" },
+        "position": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "completed"] },
+        "metrics": {
+          "type": "object",
+          "properties": {
+            "prevencion": { "type": "object" },
+            "calidad": { "type": "object" },
+            "conducta": { "type": "object" },
+            "desempeno": { "type": "object" }
+          }
+        },
+        "comments": { "type": "string" },
+        "aiFeedback": { "type": "string" },
+        "overallScore": { "type": "number" },
+        "date": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["collaboratorId", "status", "createdAt"]
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": "User",
+      "description": "User profiles"
+    },
+    "evaluations/{evaluationId}": {
+      "schema": "Evaluation",
+      "description": "Performance evaluations"
+    }
+  }
+}

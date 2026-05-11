@@ -1,0 +1,113 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helpers ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isEmailVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidDomain(email) {
+      return email.lower().endsWith('@gmail.com') || email.lower().endsWith('@maasspa.cl');
+    }
+
+    function getUserData(uid) {
+      return get(/databases/$(database)/documents/users/$(uid)).data;
+    }
+
+    function isAdmin() {
+      // Bootstrapped Admin: User email from runtime or role in DB
+      return isSignedIn() && (
+        request.auth.token.email == 'miguelreyesduran@gmail.com' || 
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', '') == 'admin')
+      );
+    }
+
+    function isSupervisor() {
+      return isSignedIn() && (
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', '') == 'supervisor'
+      );
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // --- Validation Blueprints ---
+
+    function isValidSection(s) {
+      return s is map && s.keys().size() <= 100;
+    }
+
+    function isValidMetrics(m) {
+      return m is map;
+    }
+
+    function isValidUser(data) {
+      return data.name is string && data.name.size() >= 1 &&
+             data.email is string &&
+             data.role in ['admin', 'supervisor', 'colaborador'];
+    }
+
+    function isResponsible(data) {
+      let email = request.auth.token.email;
+      return (isAdmin() || isSupervisor()) && (
+        data.get('responsibles', null) == null ||
+        data.responsibles.get('prevencion', '') == email ||
+        data.responsibles.get('calidad', '') == email ||
+        data.responsibles.get('conducta', '') == email ||
+        data.responsibles.get('desempeno', '') == email ||
+        (data.responsibles.get('prevencion', '') == '' && 
+         data.responsibles.get('calidad', '') == '' && 
+         data.responsibles.get('conducta', '') == '' && 
+         data.responsibles.get('desempeno', '') == '')
+      );
+    }
+
+    function isValidEvaluation(data) {
+      // Basic validation, allow growth
+      return data.status in ['pending', 'completed'];
+    }
+
+    // --- Collection Matching ---
+
+    match /settings/{docId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    match /users/{userId} {
+      allow get: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow list: if isSignedIn(); // Allow listing users for assignment
+      
+      allow create: if isSignedIn(); // Allow creation, verified by app logic or further rules if needed
+      allow update: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow delete: if isAdmin();
+    }
+
+    match /evaluations/{evaluationId} {
+      allow get, list: if isSignedIn(); // Simplify for now to ensure visibility
+      allow create: if isAdmin() || isSupervisor();
+      allow update: if isSignedIn() && (isAdmin() || isSupervisor() || isResponsible(existing()));
+      allow delete: if isAdmin();
+    }
+  }
+}
